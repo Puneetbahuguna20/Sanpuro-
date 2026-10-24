@@ -138,3 +138,9 @@ body.am-cursor-hidden [data-cursor-root]{opacity:0!important;visibility:hidden!i
   .am-card h3{font-size:20px}
   .am-card p{font-size:14px}
 }
+
+/* Touch screens: the map handles both swipe directions itself (it hands off to the
+   page scroll at its top/bottom edge in AboutMap.jsx) */
+@media (hover:none),(pointer:coarse){
+  .am{touch-action:none}
+}

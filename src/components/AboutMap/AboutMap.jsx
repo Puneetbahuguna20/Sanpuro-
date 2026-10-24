@@ -219,35 +219,48 @@ export default function AboutMap() {
       if (dragging && moved > 6 && !touch) { const [fx, fy] = follow(e); offX = tx - fx; offY = ty - fy; }
       dragging = false; ab.classList.remove('am-dragging');
     };
-    /* Touch swipe: a light horizontal flick pans the map (amplified, with momentum).
-       Touch events keep firing even after the browser starts a vertical page scroll,
-       unlike pointer events, so a slightly diagonal swipe still moves the map. */
-    const SWIPE_GAIN = 2.4;
-    let tStartX = 0, tStartY = 0, tStartTx = 0, tLastX = 0, tLastT = 0, tVel = 0, glide = 0, swiping = false;
+    /* Touch swipe: a light flick pans the map in both directions (amplified, with
+       momentum). The section takes over touch scrolling (touch-action: none), so when
+       the map hits its top or bottom edge the rest of a vertical swipe scrolls the page. */
+    const GAIN_X = 2.4, GAIN_Y = 1.8;
+    let tLastX = 0, tLastY = 0, tStartX = 0, tStartY = 0, tLastT = 0, velX = 0, velY = 0, glide = 0, glideY = 0, swiping = false;
+    /* move the map vertically by `d` (map units); whatever passes an edge scrolls the page */
+    const panY = (d) => {
+      const want = ty + d;
+      ty = clamp(want);
+      const over = want - ty;
+      if (over !== 0) window.scrollBy(0, (over * Math.max(1, maxY)) / GAIN_Y);
+      return over !== 0;
+    };
     const onTouchStart = (e) => {
       if (openRef.current || (cardRef.current && cardRef.current.contains(e.target))) return;
       const t = e.touches[0];
-      swiping = true; moved = 0; glide = 0; tVel = 0;
+      swiping = true; moved = 0; glide = 0; glideY = 0; velX = 0; velY = 0;
       tx = x; ty = y;
-      tStartX = tLastX = t.clientX; tStartY = t.clientY; tStartTx = tx; tLastT = performance.now();
+      tStartX = tLastX = t.clientX; tStartY = tLastY = t.clientY; tLastT = performance.now();
       lastInteract = tLastT;
     };
     const onTouchMove = (e) => {
       if (!swiping) return;
       const t = e.touches[0];
       const now = performance.now();
-      const dx = t.clientX - tStartX;
-      moved = Math.max(moved, Math.abs(dx) + Math.abs(t.clientY - tStartY));
-      tx = clamp(tStartTx - (dx * SWIPE_GAIN) / Math.max(1, maxX));
+      const ddx = t.clientX - tLastX, ddy = t.clientY - tLastY;
+      moved = Math.max(moved, Math.abs(t.clientX - tStartX) + Math.abs(t.clientY - tStartY));
+      if (moved > 6) e.preventDefault(); /* we handle the scroll ourselves */
+      const mx = (-ddx * GAIN_X) / Math.max(1, maxX);
+      const my = (-ddy * GAIN_Y) / Math.max(1, maxY);
+      tx = clamp(tx + mx);
+      panY(my);
       /* velocity in map units per ms, smoothed */
       const dt = Math.max(1, now - tLastT);
-      tVel = 0.7 * tVel + 0.3 * (-(t.clientX - tLastX) * SWIPE_GAIN / Math.max(1, maxX) / dt);
-      tLastX = t.clientX; tLastT = now; lastInteract = now;
+      velX = 0.7 * velX + 0.3 * (mx / dt);
+      velY = 0.7 * velY + 0.3 * (my / dt);
+      tLastX = t.clientX; tLastY = t.clientY; tLastT = now; lastInteract = now;
     };
     const onTouchEnd = () => {
       if (!swiping) return;
       swiping = false;
-      if (performance.now() - tLastT < 80) glide = tVel * 16; /* per-frame push */
+      if (performance.now() - tLastT < 80) { glide = velX * 16; glideY = velY * 16; } /* per-frame push */
       lastInteract = performance.now();
     };
 
@@ -273,13 +286,16 @@ export default function AboutMap() {
         tx = clamp(tx + glide); glide *= 0.93; lastInteract = performance.now();
         if (tx === 0 || tx === 1) glide = 0;
       }
+      if (Math.abs(glideY) > 0.00005) {
+        panY(glideY); glideY *= 0.93; lastInteract = performance.now();
+      }
       if (touch && visible && !reduce && !dragging && !swiping && !openRef.current && performance.now() - lastInteract > 2500) {
         const t = performance.now() / 1000;
         tx = 0.5 + 0.42 * Math.sin(t * 0.12);
         ty = 0.5 + 0.38 * Math.sin(t * 0.083 + 1.3);
       }
       /* while dragging, the map sticks to the pointer 1:1 instead of easing behind it */
-      if (visible) { const k = reduce || (dragging && moved > 6) ? 1 : swiping || Math.abs(glide) > 0.00005 ? 0.35 : 0.055; x += (tx - x) * k; y += (ty - y) * k; render(); }
+      if (visible) { const k = reduce || (dragging && moved > 6) ? 1 : swiping || Math.abs(glide) > 0.00005 || Math.abs(glideY) > 0.00005 ? 0.35 : 0.055; x += (tx - x) * k; y += (ty - y) * k; render(); }
       raf = requestAnimationFrame(loop);
     };
 
@@ -297,7 +313,7 @@ export default function AboutMap() {
     ab.addEventListener('dragstart', onDragStart);
     ab.addEventListener('contextmenu', onContextMenu);
     ab.addEventListener('touchstart', onTouchStart, { passive: true });
-    ab.addEventListener('touchmove', onTouchMove, { passive: true });
+    ab.addEventListener('touchmove', onTouchMove, { passive: false });
     ab.addEventListener('touchend', onTouchEnd);
     ab.addEventListener('touchcancel', onTouchEnd);
 

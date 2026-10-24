@@ -244,6 +244,8 @@ export default function ParticleHero({ loaded }) {
 
     const worldMouse = new THREE.Vector3();
     const localMouse = new THREE.Vector3();
+    const localRay = new THREE.Vector3();
+    const invQuat = new THREE.Quaternion();
 
     const render = () => {
       const dt = clock.getDelta();
@@ -303,6 +305,10 @@ export default function ParticleHero({ loaded }) {
       worldMouse.set(mouse.x * halfH * aspect, mouse.y * halfH, 0);
       localMouse.copy(worldMouse);
       points.worldToLocal(localMouse);
+      // Touch screens repel by distance from the finger's line of sight, so deep shapes
+      // (face relief, ribbon ring) react across their whole depth, not just near z = 0
+      invQuat.copy(points.quaternion).invert();
+      localRay.set(0, 0, -1).applyQuaternion(invQuat);
 
       const scatterAmt = Math.sin(k * Math.PI) * 0.9;
 
@@ -312,8 +318,20 @@ export default function ParticleHero({ loaded }) {
       // Mouse repel: full strength on other shapes, gentle on the face so it stays readable
       // A real finger repels like the mouse; the idle virtual pointer only nudges
       const gentle = coarse && performance.now() - lastTouch > 1200;
-      const repelRadius = (2.0 - 0.8 * faceAmt) * (gentle ? 0.55 : 1);
-      const repelForce = (0.28 - 0.2 * faceAmt) * (gentle ? 0.18 : 1);
+      // The face is softened for the desktop mouse only; on touch screens it reacts
+      // like the other shapes
+      const faceSoft = coarse ? 0 : faceAmt;
+      // Deep shapes (face relief, ribbon ring) use line-of-sight distance on touch;
+      // earth and cube keep the normal 3D distance
+      const ribbonIdx = FACE_IDX + 1;
+      const deepShape = Math.min(1, faceAmt + (currentShapeIdx === ribbonIdx ? 1 - k : 0) + (nextShapeIdx === ribbonIdx ? k : 0));
+      const deepAmt = coarse ? deepShape : 0;
+      // Touch: earth and cube always use the soft setting (a full-strength finger blows
+      // them apart); the deep shapes get full strength under a real finger
+      // Desktop: earth and cube scatter a lot at full strength, so they get a milder push
+      const soft = gentle ? 1 : coarse ? 1 - deepAmt : (1 - deepShape) * 0.55;
+      const repelRadius = (2.0 - 0.8 * faceSoft) * (1 - 0.5 * soft);
+      const repelForce = (0.28 - 0.2 * faceSoft) * (1 - 0.92 * soft);
 
       for (let i = 0; i < N; i++) {
         const i3 = i * 3;
@@ -343,9 +361,16 @@ export default function ParticleHero({ loaded }) {
 
         // 4. Mouse repel
         if (mouse.active) {
-          const dx = baseX - localMouse.x;
-          const dy = baseY - localMouse.y;
-          const dz = baseZ - localMouse.z;
+          let dx = baseX - localMouse.x;
+          let dy = baseY - localMouse.y;
+          let dz = baseZ - localMouse.z;
+          if (deepAmt > 0) {
+            // drop the part along the line of sight
+            const along = (dx * localRay.x + dy * localRay.y + dz * localRay.z) * deepAmt;
+            dx -= along * localRay.x;
+            dy -= along * localRay.y;
+            dz -= along * localRay.z;
+          }
           const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
           if (d < repelRadius && d > 0.0001) {
@@ -378,14 +403,16 @@ export default function ParticleHero({ loaded }) {
       const TWO_PI = Math.PI * 2;
       rotY += 0.0022 * (1 - faceAmt);
       rotY += (Math.round(rotY / TWO_PI) * TWO_PI - rotY) * 0.06 * faceAmt;
-      points.rotation.y = rotY + mouse.x * (0.5 - 0.25 * faceAmt);
-      rotX += ((0.35 - mouse.y * 0.3) - rotX) * 0.05;
+      // Touch screens: a finger (often just scrolling) must not tilt or shift the shape
+      const par = coarse ? 0 : 1;
+      points.rotation.y = rotY + mouse.x * (0.5 - 0.25 * faceAmt) * par;
+      rotX += ((0.35 - mouse.y * 0.3 * par) - rotX) * 0.05;
       points.rotation.x = rotX * (1 - 0.85 * faceAmt);
       points.rotation.z = -0.25 * (1 - faceAmt);
 
       // Camera parallax — background moves with mouse
-      camera.position.x += (-mouse.x * 0.6 - camera.position.x) * 0.05;
-      camera.position.y += (mouse.y * 0.4 - camera.position.y) * 0.05;
+      camera.position.x += (-mouse.x * 0.6 * par - camera.position.x) * 0.05;
+      camera.position.y += (mouse.y * 0.4 * par - camera.position.y) * 0.05;
       camera.lookAt(0, 0, 0);
 
       // Dust motion — parallax with mouse
@@ -516,7 +543,8 @@ export default function ParticleHero({ loaded }) {
 
     const ctx = gsap.context(() => {
       gsap.to(canvas, {
-        scale: 1.25,
+        // Phones: the hero is taller than the screen, so a zoom would shift the shape mid-scroll
+        scale: window.innerWidth < 700 ? 1 : 1.25,
         opacity: 0.25,
         ease: 'none',
         scrollTrigger: {
