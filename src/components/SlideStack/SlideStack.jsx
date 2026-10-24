@@ -73,7 +73,8 @@ export default function SlideStack() {
         scrollTrigger: {
           trigger: stack,
           start: 'top top',
-          end: () => '+=' + tl.duration() * window.innerHeight * 0.9,
+          // Phones and tablets get a shorter pin so each slide needs less swiping
+          end: () => '+=' + tl.duration() * window.innerHeight * (window.innerWidth < 1024 ? 0.45 : 0.9),
           pin: true,
           scrub: 1,
           anticipatePin: 1,

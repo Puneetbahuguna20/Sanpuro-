@@ -15,6 +15,13 @@
   user-select: none;
 }
 
+/* Phones and tablets: less scrolling to open the lid */
+@media (max-width: 1023px) {
+  .laptop-hero-scroller {
+    height: 170vh;
+  }
+}
+
 /* Sticky Stage */
 .laptop-hero-sticky {
   position: sticky;
