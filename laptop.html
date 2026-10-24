@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Hush — Inbox zero, the moment you open it</title>
+  <meta name="description" content="Realistic space-black anodized aluminium laptop hero opening smoothly as you scroll. Pure CSS 3D transform-style: preserve-3d.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+  <style>
+    /* CSS Reset & Core Standards */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      overflow-x: clip;
+      background-color: #000;
+      color: #fff;
+      scroll-behavior: auto;
+    }
+
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: clip;
+      width: 100%;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Pinned Hero Section (Height 100vh) */
+    .scroller {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      background: #000;
+      overflow: visible;
+    }
+
+    /* Sticky Stage */
+    .sticky {
+      position: relative;
+      height: 100vh;
+      height: 100svh;
+      width: 100%;
+      overflow: visible;
+      display: grid;
+      place-items: center;
+      background: #000;
+      z-index: 10;
+    }
+
+    /* Bluish Ambient Glow Behind Laptop */
+    .ambient-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(55% 45% at 50% 55%, rgba(95, 125, 205, 0.35), rgba(50, 70, 140, 0.15) 50%, transparent 75%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Top Headline (Fades out and moves up as user scrolls) */
+    .hero-header {
+      position: absolute;
+      top: 6vh;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      max-width: 900px;
+      text-align: center;
+      padding: 0 1.5rem;
+      z-index: 30;
+      pointer-events: none;
+      will-change: transform, opacity;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .hero-title {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(2.35rem, 6vw, 4.4rem);
+      font-weight: 400;
+      line-height: 1.06;
+      letter-spacing: -0.025em;
+      color: #f7f8fa;
+      margin-bottom: 0.85rem;
+      text-shadow: 0 4px 28px rgba(0, 0, 0, 0.95);
+    }
+
+    .hero-subline {
+      font-family: "Instrument Sans", sans-serif;
+      font-size: clamp(0.95rem, 1.8vw, 1.25rem);
+      color: #9499a6;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      line-height: 1.4;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9);
+    }
+
+    /* Interactive HUD & Progress Pill at Bottom */
+    .scroll-hud {
+      position: absolute;
+      bottom: 2.8vh;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 35;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      pointer-events: auto;
+    }
+
+    .hud-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1.1rem;
+      background: rgba(20, 25, 38, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e2e8f0;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .hud-bar {
+      width: 65px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hud-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #6366f1, #a855f7);
+      border-radius: 3px;
+      transition: width 0.08s linear;
+    }
+
+    .hud-angle {
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #a5b4fc;
+      min-width: 32px;
+      text-align: right;
+    }
+
+    .hud-btn {
+      appearance: none;
+      border: none;
+      outline: none;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-family: "Instrument Sans", sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.45rem 0.85rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .hud-btn:hover {
+      background: rgba(255, 255, 255, 0.22);
+      transform: translateY(-1px);
+    }
+
+    /* 3D Laptop Container */
+    .laptop-viewport {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      perspective: 1900px;
+      perspective-origin: 50% 38%;
+      transform-style: preserve-3d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .laptop {
+      --w: min(1060px, 92vw, 108vh);
+      --t: calc(var(--w) * .007);
+      --lid: 8deg;
+      width: var(--w);
+      height: calc(var(--w) * .68);
+      position: relative;
+      transform-style: preserve-3d;
+      will-change: transform;
+      pointer-events: auto;
+      cursor: grab;
+    }
+
+    .laptop:active {
+      cursor: grabbing;
+    }
+
+    /* BASE: Lies flat, top edge is hinge, local +Z points up */
+    .base {
+      position: absolute;
+      inset: 0;
+      transform: rotateX(90deg);
+      transform-style: preserve-3d;
+      border-radius: calc(var(--w) * 0.022);
+      background: linear-gradient(180deg, #18191d, #25272d 16%, #1f2126 72%, #2a2d33);
+      box-shadow: 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+        0 0 45px rgba(0, 0, 0, 0.95);
+    }
+
+    /* Floor Shadow */
+    .base::after {
+      content: "";
+      position: absolute;
+      inset: -6% -8%;
+      transform: translateZ(-22px);
+      background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.98) 0%, rgba(0, 0, 0, 0.7) 45%, transparent 74%);
+      filter: blur(14px);
+      pointer-events: none;
+    }
+
+    /* Metallic Hinge Joint connecting Base & Lid */
+    .hinge-joint {
+      position: absolute;
+      top: -3px;
+      left: 8%;
+      right: 8%;
+      height: 7px;
+      background: linear-gradient(180deg, #444750, #1c1d22 55%, #0d0e11);
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+      z-index: 20;
+    }
+
+    /* Base Front Edge Strip */
+    .base-front-edge {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(var(--w) * .016);
+      transform-origin: bottom;
+      transform: rotateX(90deg);
+      background: linear-gradient(180deg, #585c65, #35383f 30%, #22242a 70%, #121316);
+      border-bottom-left-radius: calc(var(--w) * 0.016);
+      border-bottom-right-radius: calc(var(--w) * 0.016);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow: hidden;
+    }
+
+    .base-thumb-notch {
+      width: calc(var(--w) * 0.11);
+      height: calc(var(--w) * 0.0055);
+      background: #0a0b0d;
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9);
+    }
+
+    /* Base Sides */
+    .base-side-left {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: calc(var(--w) * 0.016);
+      transform-origin: left;
+      transform: rotateY(-90deg);
+      background: linear-gradient(90deg, #141519, #2b2e35);
+    }
+
+    .base-side-right {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: calc(var(--w) * 0.016);
+      transform-origin: right;
+      transform: rotateY(90deg);
+      background: linear-gradient(90deg, #2b2e35, #141519);
+    }
+
+    /* Keyboard Well on Base */
+    .keyboard-well {
+      position: absolute;
+      left: 8.5%;
+      right: 8.5%;
+      top: 6.5%;
+      height: 46%;
+      transform: translateZ(1px);
+      background: #090a0d;
+      border-radius: calc(var(--w) * 0.008);
+      box-shadow: 
+        inset 0 3px 8px rgba(0, 0, 0, 0.95), 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+        0 0 18px rgba(99, 102, 241, 0.12); /* Backlight glow */
+      padding: calc(var(--w) * 0.006);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: calc(var(--w) * 0.0035);
+      box-sizing: border-box;
+      z-index: 10;
+    }
+
+    .kb-row {
+      display: flex;
+      gap: calc(var(--w) * 0.0032);
+      width: 100%;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .kb-row.fn-row {
+      flex: 0.65;
+    }
+
+    .kb-key {
+      min-width: 0;
+      padding: .45em .55em;
+      font-size: calc(var(--w) * .0085);
+      background: #141519;
+      border-radius: 4px;
+      color: #9aa0ad;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 3px rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Instrument Sans", -apple-system, sans-serif;
+      user-select: none;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
+    }
+
+    .kb-key.arrow-split {
+      padding: 0;
+      flex-direction: column;
+      gap: 1px;
+      background: transparent;
+      box-shadow: none;
+      border: none;
+    }
+
+    .kb-key.arrow-sub {
+      width: 100%;
+      flex: 1;
+      background: #141519;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75em;
+    }
+
+    /* Trackpad */
+    .trackpad {
+      position: absolute;
+      left: 28%;
+      width: 44%;
+      top: 58%;
+      height: 36%;
+      transform: translateZ(1px);
+      background: linear-gradient(180deg, #1d1e23 0%, #16171b 100%);
+      border-radius: calc(var(--w) * 0.01);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), 0 1px 3px rgba(0, 0, 0, 0.5);
+      z-index: 10;
+    }
+
+    /* Cracked Lid Glowing Slit (Visible when closed) */
+    .cracked-glow {
+      position: absolute;
+      bottom: 0;
+      left: 10%;
+      right: 10%;
+      height: 3px;
+      background: radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.9), rgba(168, 85, 247, 0.6) 40%, transparent 80%);
+      box-shadow: 0 0 15px 4px rgba(99, 102, 241, 0.5);
+      pointer-events: none;
+      z-index: 12;
+      transition: opacity 0.3s ease;
+    }
+
+    /* LID: Child of base, swings open along hinge at top edge (50% 0) */
+    .lid {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 0;
+      transform: translateZ(3px) rotateX(var(--lid));
+      transform-style: preserve-3d;
+      border-radius: calc(var(--w) * 0.022);
+      will-change: transform;
+      z-index: 15;
+    }
+
+    /* Outer Shell of Lid (Seen when closed) */
+    .lid-out {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transform: translateZ(var(--t));
+      border-radius: calc(var(--w) * 0.022);
+      background:
+        radial-gradient(120% 70% at 30% -10%, rgba(255, 255, 255, 0.22), transparent 55%),
+        linear-gradient(178deg, #363941, #26282f 30%, #1c1d22 70%, #282a31);
+      box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.3),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.8),
+        inset 1px 0 1px rgba(255, 255, 255, 0.12),
+        inset -1px 0 1px rgba(255, 255, 255, 0.12),
+        0 6px 25px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+    }
+
+    /* Subtle SVG Noise for Anodized Aluminium */
+    .noise-overlay {
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.22;
+      mix-blend-mode: overlay;
+      pointer-events: none;
+    }
+
+    /* Inside of Lid (Screen Bezel) */
+    .lid-in {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transform: rotateX(180deg) translateZ(1px);
+      border-radius: calc(var(--w) * 0.022);
+      background: #050506;
+      box-shadow: 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+        0 0 35px rgba(99, 102, 241, 0.25); /* Screen lighting aura */
+      padding: 1.6% 1.6% 3.8%;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    /* Camera Notch at Top Center */
+    .camera-notch {
+      position: absolute;
+      top: 1.6%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 11%;
+      height: 3.4%;
+      background: #050506;
+      border-bottom-left-radius: 7px;
+      border-bottom-right-radius: 7px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    .camera-lens {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #0c1424;
+      box-shadow: inset 0 0 1px 1px rgba(56, 189, 248, 0.35), 0 0 3px rgba(0, 0, 0, 0.9);
+      position: relative;
+    }
+
+    .camera-indicator {
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: rgba(34, 197, 94, 0.8);
+      position: absolute;
+      right: -8px;
+    }
+
+    /* Display Surface */
+    .display {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      border-radius: calc(var(--w) * 0.012);
+      overflow: hidden;
+      font-size: calc(var(--w) * .0105);
+      font-family: "Instrument Sans", -apple-system, sans-serif;
+      color: #f1f3f7;
+      background:
+        radial-gradient(ellipse at 80% 18%, rgba(56, 189, 248, 0.35), transparent 48%),
+        radial-gradient(ellipse at 18% 80%, rgba(99, 102, 241, 0.42), transparent 52%),
+        radial-gradient(ellipse at 62% 58%, rgba(168, 85, 247, 0.30), transparent 48%),
+        linear-gradient(135deg, #070c1a 0%, #0d1633 50%, #090f24 100%);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+      user-select: none;
+    }
+
+    /* Glossy Glass Reflection on Screen */
+    .screen-reflection {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 32%, transparent 64%);
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    /* Black "Screen Off" Overlay */
+    .screen-off-overlay {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      z-index: 45;
+      pointer-events: none;
+      opacity: 0;
+      will-change: opacity;
+    }
+
+    /* Lid Front Edge Thickness Strip */
+    .lid-front-edge {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--t);
+      transform-origin: bottom;
+      transform: translateZ(var(--t)) rotateX(90deg);
+      background: linear-gradient(90deg, #1c1d22, #3c3e47 25%, #727680 50%, #3c3e47 75%, #1c1d22);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    }
+
+    .lid-thumb-notch {
+      width: calc(var(--w) * 0.11);
+      height: 100%;
+      background: #111215;
+      border-radius: 2px 2px 0 0;
+    }
+
+    /* Frosted App Window "Hush" */
+    .hush-window {
+      position: absolute;
+      inset: 1.2em;
+      background: rgba(14, 18, 30, 0.78);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 0.85em;
+      box-shadow: 0 1.5em 3.5em rgba(0, 0, 0, 0.65);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    /* Window Titlebar */
+    .window-header {
+      height: 2.5em;
+      padding: 0 0.9em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .traffic-lights {
+      display: flex;
+      align-items: center;
+      gap: 0.45em;
+    }
+
+    .traffic-dot {
+      width: 0.75em;
+      height: 0.75em;
+      border-radius: 50%;
+    }
+
+    .traffic-dot.close { background: #ff5f56; }
+    .traffic-dot.min { background: #ffbd2e; }
+    .traffic-dot.max { background: #27c93f; }
+
+    .window-title {
+      font-size: 0.82em;
+      font-weight: 500;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+
+    .window-title strong {
+      color: #f3f4f6;
+      font-weight: 600;
+    }
+
+    .window-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      font-size: 0.75em;
+      color: #94a3b8;
+    }
+
+    /* Window Body: Sidebar + Main Area */
+    .window-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .window-sidebar {
+      width: 17.5em;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(10, 14, 24, 0.45);
+      display: flex;
+      flex-direction: column;
+      padding: 0.8em;
+      gap: 0.7em;
+    }
+
+    .sidebar-badge {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      padding: 0.3em 0.75em;
+      background: rgba(139, 92, 246, 0.22);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      color: #ddd6fe;
+      border-radius: 9999px;
+      font-size: 0.78em;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .sidebar-badge::before {
+      content: "";
+      width: 0.5em;
+      height: 0.5em;
+      border-radius: 50%;
+      background: #a855f7;
+    }
+
+    .conv-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35em;
+      overflow-y: auto;
+    }
+
+    .conv-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65em;
+      padding: 0.48em 0.6em;
+      border-radius: 0.55em;
+      transition: background 0.15s ease;
+      cursor: default;
+    }
+
+    .conv-item.active {
+      background: rgba(255, 255, 255, 0.09);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .conv-avatar {
+      width: 2em;
+      height: 2em;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 600;
+      font-size: 0.78em;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .conv-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .conv-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.15em;
+    }
+
+    .conv-name {
+      font-size: 0.82em;
+      font-weight: 600;
+      color: #f1f5f9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .conv-time {
+      font-size: 0.68em;
+      color: #64748b;
+    }
+
+    .conv-preview {
+      font-size: 0.74em;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Main Content Area */
+    .window-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: rgba(14, 18, 30, 0.2);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .main-topbar {
+      height: 2.8em;
+      padding: 0 1.2em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .chip-group {
+      display: flex;
+      align-items: center;
+      gap: 0.6em;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      padding: 0.28em 0.7em;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+      font-size: 0.76em;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .chip-count {
+      background: rgba(99, 102, 241, 0.35);
+      color: #c7d2fe;
+      padding: 0.1em 0.45em;
+      border-radius: 9999px;
+      font-size: 0.85em;
+    }
+
+    .more-btn {
+      width: 1.8em;
+      height: 1.8em;
+      border-radius: 0.4em;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      display: grid;
+      place-items: center;
+      font-size: 0.85em;
+    }
+
+    /* Tab Panels */
+    .tab-panel {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      padding: 1.2em;
+      overflow-y: auto;
+      gap: 1em;
+    }
+
+    .tab-panel.active {
+      display: flex;
+    }
+
+    /* INBOX TAB: Filter popover & Chat prompt */
+    .filter-popover {
+      background: rgba(20, 26, 44, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 0.75em;
+      padding: 1em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9em;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .filter-title {
+      font-size: 0.74em;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+    }
+
+    /* 3-col channels grid */
+    .channels-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5em;
+    }
+
+    .channel-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      padding: 0.45em 0.65em;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0.5em;
+      font-size: 0.78em;
+      color: #e2e8f0;
+      font-weight: 500;
+    }
+
+    .channel-sq {
+      width: 0.65em;
+      height: 0.65em;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .sq-chat { background: #10b981; }
+    .sq-email { background: #6366f1; }
+    .sq-social { background: #f59e0b; }
+    .sq-work { background: #f43f5e; }
+    .sq-sms { background: #06b6d4; }
+    .sq-forums { background: #a855f7; }
+
+    /* Filter Controls Row */
+    .filter-controls-row {
+      display: flex;
+      gap: 1.2em;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 0.8em;
+    }
+
+    .filter-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4em;
+    }
+
+    .filter-label {
+      font-size: 0.7em;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .pill-group {
+      display: flex;
+      gap: 0.3em;
+    }
+
+    .filter-pill {
+      padding: 0.25em 0.55em;
+      border-radius: 0.4em;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      font-size: 0.72em;
+      font-weight: 500;
+    }
+
+    .filter-pill.active {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: rgba(99, 102, 241, 0.5);
+      color: #e0e7ff;
+      font-weight: 600;
+    }
+
+    .radio-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3em;
+    }
+
+    .radio-item {
+      display: flex;
+      align-items: center;
+      gap: 0.45em;
+      font-size: 0.72em;
+      color: #94a3b8;
+    }
+
+    .radio-item.checked {
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+
+    .radio-circle {
+      width: 0.8em;
+      height: 0.8em;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: grid;
+      place-items: center;
+    }
+
+    .radio-circle.active {
+      border-color: #6366f1;
+    }
+
+    .radio-dot {
+      width: 0.4em;
+      height: 0.4em;
+      border-radius: 50%;
+      background: #6366f1;
+    }
+
+    /* Bottom Chat Area in Inbox */
+    .inbox-bottom {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6em;
+    }
+
+    .chat-bubble {
+      align-self: flex-start;
+      padding: 0.6em 1em;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.2));
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      border-radius: 0.8em 0.8em 0.8em 0.2em;
+      font-size: 0.84em;
+      color: #f1f5f9;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+
+    .prompt-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.35em 0.5em 0.35em 1em;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      font-size: 0.82em;
+      color: #e2e8f0;
+    }
+
+    .prompt-text {
+      color: #e2e8f0;
+      font-weight: 500;
+    }
+
+    .send-arrow-btn {
+      width: 1.85em;
+      height: 1.85em;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      border: none;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+    }
+
+    /* REPLIES TAB */
+    .draft-card {
+      background: rgba(20, 26, 44, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.75em;
+      padding: 1em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6em;
+    }
+
+    .draft-to {
+      font-size: 0.78em;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .draft-body {
+      font-size: 0.8em;
+      line-height: 1.45;
+      color: #94a3b8;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 0.7em 0.8em;
+      border-radius: 0.5em;
+      border-left: 2px solid #6366f1;
+    }
+
+    .draft-actions {
+      display: flex;
+      gap: 0.5em;
+      align-self: flex-end;
+    }
+
+    .draft-btn {
+      padding: 0.35em 0.75em;
+      border-radius: 0.45em;
+      font-size: 0.74em;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+
+    .draft-btn.primary {
+      background: #6366f1;
+      color: #fff;
+    }
+
+    .draft-btn.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+    }
+
+    /* TRIAGE TAB */
+    .triage-cols {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.8em;
+      height: 100%;
+    }
+
+    .triage-col {
+      background: rgba(15, 20, 35, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0.65em;
+      padding: 0.7em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6em;
+    }
+
+    .triage-col-title {
+      font-size: 0.76em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      justify-content: space-between;
+      color: #94a3b8;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 0.4em;
+    }
+
+    .triage-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 0.5em;
+      padding: 0.6em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3em;
+    }
+
+    .triage-card-title {
+      font-size: 0.78em;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .triage-card-meta {
+      font-size: 0.68em;
+      color: #64748b;
+    }
+
+    /* SEARCH TAB */
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 0.6em;
+      padding: 0.6em 0.9em;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 0.6em;
+      font-size: 0.82em;
+      color: #94a3b8;
+    }
+
+    .search-results {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+    }
+
+    .result-item {
+      padding: 0.7em 0.9em;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 0.6em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25em;
+    }
+
+    .result-title {
+      font-size: 0.8em;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .result-snippet {
+      font-size: 0.72em;
+      color: #94a3b8;
+    }
+
+    /* PRIVATE TAB */
+    .private-vault {
+      margin: auto 0;
+      text-align: center;
+      background: rgba(20, 26, 44, 0.7);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 0.85em;
+      padding: 1.8em 1.4em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.7em;
+    }
+
+    .vault-icon {
+      width: 2.6em;
+      height: 2.6em;
+      border-radius: 50%;
+      background: rgba(139, 92, 246, 0.2);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      display: grid;
+      place-items: center;
+      font-size: 1.2em;
+      color: #c4b5fd;
+    }
+
+    .vault-title {
+      font-size: 0.95em;
+      font-weight: 700;
+      color: #f5f3ff;
+    }
+
+    .vault-desc {
+      font-size: 0.76em;
+      color: #a78bfa;
+      max-width: 32em;
+      line-height: 1.45;
+    }
+
+    /* PILL TAB BAR: Light pill fixed in sticky stage at bottom center */
+    .pill-tabs {
+      position: absolute;
+      bottom: 2.2rem;
+      left: 50%;
+      transform: translate(-50%, 14px);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: #f4f5f7;
+      padding: 0.32rem;
+      border-radius: 9999px;
+      box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 92vw;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .pill-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .pill-tabs.visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
+      pointer-events: auto;
+    }
+
+    .tab-btn {
+      appearance: none;
+      border: none;
+      outline: none;
+      background: transparent;
+      padding: 0.42rem 0.95rem;
+      border-radius: 9999px;
+      font-family: "Instrument Sans", sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #555a64;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: #111317;
+    }
+
+    .tab-btn[aria-selected="true"] {
+      background: #ffffff;
+      color: #0b0c0f;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    }
+
+    /* SECTION AFTER SCROLLER */
+    .after-scroll {
+      position: relative;
+      background: #000;
+      color: #fff;
+      padding: 18vh 1.5rem 22vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      z-index: 20;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .after-scroll-divider {
+      width: 48px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      margin-bottom: 3.5rem;
+    }
+
+    .after-scroll h2 {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.12;
+      color: #f7f8fa;
+      margin-bottom: 1.2rem;
+      max-width: 760px;
+    }
+
+    .after-scroll p {
+      font-family: "Instrument Sans", sans-serif;
+      font-size: clamp(1rem, 1.6vw, 1.2rem);
+      color: #8c909b;
+      line-height: 1.6;
+      max-width: 600px;
+      font-weight: 400;
+    }
+
+    .return-top-btn {
+      margin-top: 2.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+      color: #e2e8f0;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .return-top-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateY(-2px);
+    }
+
+    /* Respect Prefers-Reduced-Motion */
+    @media (prefers-reduced-motion: reduce) {
+      .hero-header {
+        position: relative;
+        top: 4vh;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+      .scroll-hud {
+        display: none !important;
+      }
+      .pill-tabs {
+        opacity: 1 !important;
+        transform: translate(-50%, 0) !important;
+        pointer-events: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Pinned Hero Section -->
+  <section class="scroller" id="scroller">
+    
+    <!-- Stage -->
+    <div class="sticky" id="stickyStage">
+      
+      <!-- Faint Bluish Ambient Glow Behind Laptop -->
+      <div class="ambient-glow" aria-hidden="true"></div>
+
+      <!-- Top Center Headline -->
+      <header class="hero-header" id="heroHeader">
+        <h1 class="hero-title">Inbox zero, the moment you open it.</h1>
+        <p class="hero-subline">Every channel, sorted before you sit down.</p>
+      </header>
+
+      <!-- Interactive HUD & Progress Pill at Bottom -->
+      <div class="scroll-hud" id="scrollHud">
+        <div class="hud-pill">
+          <span id="hudStatus">Scroll to open</span>
+          <div class="hud-bar">
+            <div class="hud-fill" id="hudFill"></div>
+          </div>
+          <span class="hud-angle" id="hudAngle">8°</span>
+        </div>
+        <button class="hud-btn" id="hudActionBtn" title="Toggle open/close">Open</button>
+      </div>
+
+      <!-- 3D Laptop Viewport -->
+      <div class="laptop-viewport">
+        <div class="laptop" id="laptop" title="Drag up/down or scroll to open and close">
+          
+          <!-- BASE (Lies flat, rotateX 90deg) -->
+          <div class="base" id="laptopBase">
+            
+            <!-- Metallic Hinge Cylinder Bar -->
+            <div class="hinge-joint"></div>
+
+            <!-- Base Left & Right Anodized Edges -->
+            <div class="base-side-left"></div>
+            <div class="base-side-right"></div>
+
+            <!-- Keyboard Well -->
+            <div class="keyboard-well" id="keyboardWell">
+              <!-- Built via JavaScript as flex rows of real Mac-style keys -->
+            </div>
+
+            <!-- Trackpad -->
+            <div class="trackpad"></div>
+
+            <!-- Cracked lid backlight aura slit (visible when closed) -->
+            <div class="cracked-glow" id="crackedGlow"></div>
+
+            <!-- Base Front Edge Strip -->
+            <div class="base-front-edge">
+              <div class="base-thumb-notch"></div>
+            </div>
+
+            <!-- LID (Child of base, hinge at 50% 0, swings open along rotateX) -->
+            <div class="lid" id="laptopLid">
+              
+              <!-- Lid Outer Shell (Seen ONLY when closed) -->
+              <div class="lid-out" id="lidOut">
+                <div class="noise-overlay"></div>
+              </div>
+
+              <!-- Lid Inside (Screen side, faces user when open) -->
+              <div class="lid-in" id="lidIn">
+                
+                <!-- Camera Notch at top center -->
+                <div class="camera-notch">
+                  <div class="camera-lens">
+                    <div class="camera-indicator"></div>
+                  </div>
+                </div>
+
+                <!-- Display with frosted Hush app -->
+                <div class="display">
+                  
+                  <!-- Screen reflection -->
+                  <div class="screen-reflection"></div>
+
+                  <!-- Screen off black overlay -->
+                  <div class="screen-off-overlay" id="screenOffOverlay"></div>
+
+                  <!-- Frosted Window ("Hush") -->
+                  <div class="hush-window">
+                    
+                    <!-- Titlebar -->
+                    <div class="window-header">
+                      <div class="traffic-lights">
+                        <div class="traffic-dot close"></div>
+                        <div class="traffic-dot min"></div>
+                        <div class="traffic-dot max"></div>
+                      </div>
+                      <div class="window-title">
+                        <strong>Hush</strong> <span>— Unified Inbound</span>
+                      </div>
+                      <div class="window-actions">
+                        <span>Connected</span>
+                      </div>
+                    </div>
+
+                    <!-- Window Body -->
+                    <div class="window-body">
+                      
+                      <!-- Left Sidebar -->
+                      <aside class="window-sidebar">
+                        <div class="sidebar-badge">Needs reply</div>
+                        
+                        <div class="conv-list">
+                          <div class="conv-item active">
+                            <div class="conv-avatar" style="background: #0d9488;">ER</div>
+                            <div class="conv-details">
+                              <div class="conv-header">
+                                <span class="conv-name">Elena Rostova</span>
+                                <span class="conv-time">2m</span>
+                              </div>
+                              <div class="conv-preview">Token migration specs are reviewed...</div>
+                            </div>
+                          </div>
+
+                          <div class="conv-item">
+                            <div class="conv-avatar" style="background: #6366f1;">SC</div>
+                            <div class="conv-details">
+                              <div class="conv-header">
+                                <span class="conv-name">Sarah Chen</span>
+                                <span class="conv-time">14m</span>
+                              </div>
+                              <div class="conv-preview">Can we check the board deck slides?</div>
+                            </div>
+                          </div>
+
+                          <div class="conv-item">
+                            <div class="conv-avatar" style="background: #f59e0b;">MV</div>
+                            <div class="conv-details">
+                              <div class="conv-header">
+                                <span class="conv-name">Marcus Vance</span>
+                                <span class="conv-time">1h</span>
+                              </div>
+                              <div class="conv-preview">Partnership agreement draft attached.</div>
+                            </div>
+                          </div>
+
+                          <div class="conv-item">
+                            <div class="conv-avatar" style="background: #f43f5e;">DT</div>
+                            <div class="conv-details">
+                              <div class="conv-header">
+                                <span class="conv-name">Design Team</span>
+                                <span class="conv-time">3h</span>
+                              </div>
+                              <div class="conv-preview">New components ready for review.</div>
+                            </div>
+                          </div>
+
+                          <div class="conv-item">
+                            <div class="conv-avatar" style="background: #06b6d4;">CM</div>
+                            <div class="conv-details">
+                              <div class="conv-header">
+                                <span class="conv-name">Clara Martinez</span>
+                                <span class="conv-time">5h</span>
+                              </div>
+                              <div class="conv-preview">Confirmed sync for tomorrow 10am.</div>
+                            </div>
+                          </div>
+
+                          <div class="conv-item">
+                            <div class="conv-avatar" style="background: #a855f7;">AR</div>
+                            <div class="conv-details">
+                              <div class="conv-header">
+                                <span class="conv-name">Alex Rivera</span>
+                                <span class="conv-time">Yesterday</span>
+                              </div>
+                              <div class="conv-preview">Latest sprint telemetry is clean.</div>
+                            </div>
+                          </div>
+                        </div>
+                      </aside>
+
+                      <!-- Main Area -->
+                      <main class="window-main">
+                        
+                        <div class="main-topbar">
+                          <div class="chip-group">
+                            <span class="chip">
+                              Messages <span class="chip-count">14</span>
+                            </span>
+                            <span class="chip" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #6ee7b7;">
+                              Zero Inbox Active
+                            </span>
+                          </div>
+                          <div class="more-btn">···</div>
+                        </div>
+
+                        <!-- TAB 1: INBOX (Default) -->
+                        <div class="tab-panel active" id="panel-inbox" role="tabpanel" aria-labelledby="tab-inbox">
+                          
+                          <!-- Channels Filter Popover -->
+                          <div class="filter-popover">
+                            <div class="filter-title">Channel Filters</div>
+                            
+                            <!-- 3-col channels grid -->
+                            <div class="channels-grid">
+                              <div class="channel-chip">
+                                <span class="channel-sq sq-chat"></span>
+                                <span>Chat</span>
+                              </div>
+                              <div class="channel-chip">
+                                <span class="channel-sq sq-email"></span>
+                                <span>Email</span>
+                              </div>
+                              <div class="channel-chip">
+                                <span class="channel-sq sq-social"></span>
+                                <span>Social</span>
+                              </div>
+                              <div class="channel-chip">
+                                <span class="channel-sq sq-work"></span>
+                                <span>Work</span>
+                              </div>
+                              <div class="channel-chip">
+                                <span class="channel-sq sq-sms"></span>
+                                <span>SMS</span>
+                              </div>
+                              <div class="channel-chip">
+                                <span class="channel-sq sq-forums"></span>
+                                <span>Forums</span>
+                              </div>
+                            </div>
+
+                            <!-- Priority, Time range, Sort by -->
+                            <div class="filter-controls-row">
+                              
+                              <div class="filter-group">
+                                <span class="filter-label">Priority</span>
+                                <div class="pill-group">
+                                  <span class="filter-pill active">All</span>
+                                  <span class="filter-pill">Personal</span>
+                                  <span class="filter-pill">Work</span>
+                                  <span class="filter-pill">Service</span>
+                                </div>
+                              </div>
+
+                              <div class="filter-group">
+                                <span class="filter-label">Time Range</span>
+                                <div class="pill-group">
+                                  <span class="filter-pill active">Daily</span>
+                                  <span class="filter-pill">Weekly</span>
+                                  <span class="filter-pill">Monthly</span>
+                                </div>
+                              </div>
+
+                              <div class="filter-group">
+                                <span class="filter-label">Sort By</span>
+                                <div class="radio-list">
+                                  <div class="radio-item checked">
+                                    <div class="radio-circle active"><div class="radio-dot"></div></div>
+                                    <span>Newest first</span>
+                                  </div>
+                                  <div class="radio-item">
+                                    <div class="radio-circle"></div>
+                                    <span>Priority score</span>
+                                  </div>
+                                  <div class="radio-item">
+                                    <div class="radio-circle"></div>
+                                    <span>Unread first</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                            </div>
+                          </div>
+
+                          <!-- Bottom Chat / Action Area -->
+                          <div class="inbox-bottom">
+                            <div class="chat-bubble">
+                              Glad you're here, let's get your inbox to zero.
+                            </div>
+                            <div class="prompt-bar">
+                              <span class="prompt-text">Show me what you got!</span>
+                              <button class="send-arrow-btn" aria-label="Send prompt">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                                  <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+
+                        </div>
+
+                        <!-- TAB 2: REPLIES -->
+                        <div class="tab-panel" id="panel-replies" role="tabpanel" aria-labelledby="tab-replies">
+                          <div class="draft-card">
+                            <div class="draft-to">Draft • Re: Token migration schedule</div>
+                            <div class="draft-body">
+                              "Hey Elena, reviewed the token specs. Everything aligns with the Q3 release schedule. Pushing to staging today."
+                            </div>
+                            <div class="draft-actions">
+                              <button class="draft-btn secondary">Edit</button>
+                              <button class="draft-btn primary">Send Now (⌘↵)</button>
+                            </div>
+                          </div>
+
+                          <div class="draft-card">
+                            <div class="draft-to">Draft • Re: Partnership sync</div>
+                            <div class="draft-body">
+                              "Hi Marcus, Thursday at 2 PM PST works smoothly for our team. Looking forward to diving into the integration details."
+                            </div>
+                            <div class="draft-actions">
+                              <button class="draft-btn secondary">Regenerate</button>
+                              <button class="draft-btn primary">Send Now (⌘↵)</button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- TAB 3: TRIAGE -->
+                        <div class="tab-panel" id="panel-triage" role="tabpanel" aria-labelledby="tab-triage">
+                          <div class="triage-cols">
+                            <div class="triage-col">
+                              <div class="triage-col-title">
+                                <span>Now</span>
+                                <span>2</span>
+                              </div>
+                              <div class="triage-card">
+                                <div class="triage-card-title">Resolve eu-central telemetry</div>
+                                <div class="triage-card-meta">Urgent • 8m ago</div>
+                              </div>
+                              <div class="triage-card">
+                                <div class="triage-card-title">Sign off deliverables</div>
+                                <div class="triage-card-meta">Work • 32m ago</div>
+                              </div>
+                            </div>
+
+                            <div class="triage-col">
+                              <div class="triage-col-title">
+                                <span>Later</span>
+                                <span>3</span>
+                              </div>
+                              <div class="triage-card">
+                                <div class="triage-card-title">RFC typography refresh</div>
+                                <div class="triage-card-meta">Design • 2h ago</div>
+                              </div>
+                              <div class="triage-card">
+                                <div class="triage-card-title">Weekly growth digest</div>
+                                <div class="triage-card-meta">Metrics • Yesterday</div>
+                              </div>
+                            </div>
+
+                            <div class="triage-col">
+                              <div class="triage-col-title">
+                                <span>Done</span>
+                                <span>14</span>
+                              </div>
+                              <div class="triage-card">
+                                <div class="triage-card-title">Merge PR #348 (CSS 3D)</div>
+                                <div class="triage-card-meta">Engineering • Today</div>
+                              </div>
+                              <div class="triage-card">
+                                <div class="triage-card-title">Cleared 14 conversations</div>
+                                <div class="triage-card-meta">Inbox Zero • Today</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- TAB 4: SEARCH -->
+                        <div class="tab-panel" id="panel-search" role="tabpanel" aria-labelledby="tab-search">
+                          <div class="search-box">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <circle cx="11" cy="11" r="8"></circle>
+                              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <span>Search messages, channels, attachments...</span>
+                            <span style="margin-left: auto; font-size: 0.8em; opacity: 0.6;">⌘K</span>
+                          </div>
+
+                          <div class="search-results">
+                            <div class="result-item">
+                              <div class="result-title">Q3 Launch Architecture.pdf</div>
+                              <div class="result-snippet">Matching in Work / Sarah Chen • Shared 2 hours ago</div>
+                            </div>
+                            <div class="result-item">
+                              <div class="result-title">Design system token specs v2</div>
+                              <div class="result-snippet">Matching in Chat / Elena Rostova • Updated 14m ago</div>
+                            </div>
+                            <div class="result-item">
+                              <div class="result-title">Customer survey feedback highlights</div>
+                              <div class="result-snippet">Matching in Social / Forums triage digest</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- TAB 5: PRIVATE -->
+                        <div class="tab-panel" id="panel-private" role="tabpanel" aria-labelledby="tab-private">
+                          <div class="private-vault">
+                            <div class="vault-icon">⬢</div>
+                            <div class="vault-title">Zero-Knowledge Private Threads</div>
+                            <div class="vault-desc">
+                              End-to-end encrypted hardware isolated channels. Messages and identity metadata are sealed locally on device before transmission.
+                            </div>
+                          </div>
+                        </div>
+
+                      </main>
+
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- Lid Front Edge Thickness Strip -->
+              <div class="lid-front-edge">
+                <div class="lid-thumb-notch"></div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Pill Tab Bar (Appears when laptop is open) -->
+      <nav class="pill-tabs" id="pillTabs" role="tablist" aria-label="Inbox navigation tabs">
+        <button class="tab-btn" role="tab" id="tab-inbox" aria-selected="true" aria-controls="panel-inbox">Inbox</button>
+        <button class="tab-btn" role="tab" id="tab-replies" aria-selected="false" aria-controls="panel-replies">Replies</button>
+        <button class="tab-btn" role="tab" id="tab-triage" aria-selected="false" aria-controls="panel-triage">Triage</button>
+        <button class="tab-btn" role="tab" id="tab-search" aria-selected="false" aria-controls="panel-search">Search</button>
+        <button class="tab-btn" role="tab" id="tab-private" aria-selected="false" aria-controls="panel-private">Private</button>
+      </nav>
+
+    </div>
+
+  </section>
+
+  <!-- Section After Scroll Section -->
+  <section class="after-scroll" id="afterSection">
+    <div class="after-scroll-divider"></div>
+    <h2>Every message, already where it belongs.</h2>
+    <p>
+      Hush synthesizes your inbound streams into clear, actionable priorities.
+      No noise, no context switching—just deep focus from the second you lift the screen.
+    </p>
+    <button class="return-top-btn" id="returnTopBtn">
+      <span>↑ Close laptop and return to top</span>
+    </button>
+  </section>
+
+  <!-- Vanilla JS Engine with True Progressive Lock -->
+  <script>
+    (function() {
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+      }
+      window.scrollTo(0, 0);
+
+      // 1. Build Mac-style Keyboard via JS as flex rows
+      const keyboardWell = document.getElementById('keyboardWell');
+
+      const kbLayout = [
+        {
+          isFn: true,
+          keys: [
+            { label: 'esc', grow: 1.3 },
+            { label: '🔅', grow: 1 },
+            { label: '🔆', grow: 1 },
+            { label: '▤', grow: 1 },
+            { label: '🔍', grow: 1 },
+            { label: '🎙', grow: 1 },
+            { label: '🌙', grow: 1 },
+            { label: '⏮', grow: 1 },
+            { label: '⏯', grow: 1 },
+            { label: '⏭', grow: 1 },
+            { label: '🔇', grow: 1 },
+            { label: '🔉', grow: 1 },
+            { label: '🔊', grow: 1 },
+            { label: '⏻', grow: 1.3 }
+          ]
+        },
+        {
+          keys: [
+            { label: '~ `', grow: 1 },
+            { label: '1', grow: 1 },
+            { label: '2', grow: 1 },
+            { label: '3', grow: 1 },
+            { label: '4', grow: 1 },
+            { label: '5', grow: 1 },
+            { label: '6', grow: 1 },
+            { label: '7', grow: 1 },
+            { label: '8', grow: 1 },
+            { label: '9', grow: 1 },
+            { label: '0', grow: 1 },
+            { label: '-', grow: 1 },
+            { label: '=', grow: 1 },
+            { label: 'delete', grow: 1.6 }
+          ]
+        },
+        {
+          keys: [
+            { label: 'tab', grow: 1.5 },
+            { label: 'Q', grow: 1 }, { label: 'W', grow: 1 }, { label: 'E', grow: 1 },
+            { label: 'R', grow: 1 }, { label: 'T', grow: 1 }, { label: 'Y', grow: 1 },
+            { label: 'U', grow: 1 }, { label: 'I', grow: 1 }, { label: 'O', grow: 1 },
+            { label: 'P', grow: 1 }, { label: '[', grow: 1 }, { label: ']', grow: 1 },
+            { label: '\\', grow: 1.1 }
+          ]
+        },
+        {
+          keys: [
+            { label: 'caps lock', grow: 1.8 },
+            { label: 'A', grow: 1 }, { label: 'S', grow: 1 }, { label: 'D', grow: 1 },
+            { label: 'F', grow: 1 }, { label: 'G', grow: 1 }, { label: 'H', grow: 1 },
+            { label: 'J', grow: 1 }, { label: 'K', grow: 1 }, { label: 'L', grow: 1 },
+            { label: ';', grow: 1 }, { label: "'", grow: 1 },
+            { label: 'return', grow: 1.8 }
+          ]
+        },
+        {
+          keys: [
+            { label: 'shift', grow: 2.3 },
+            { label: 'Z', grow: 1 }, { label: 'X', grow: 1 }, { label: 'C', grow: 1 },
+            { label: 'V', grow: 1 }, { label: 'B', grow: 1 }, { label: 'N', grow: 1 },
+            { label: 'M', grow: 1 }, { label: ',', grow: 1 }, { label: '.', grow: 1 },
+            { label: '/', grow: 1 },
+            { label: 'shift', grow: 2.3 }
+          ]
+        },
+        {
+          keys: [
+            { label: 'fn', grow: 0.9 },
+            { label: 'control', grow: 1 },
+            { label: 'option', grow: 1.1 },
+            { label: 'command', grow: 1.35 },
+            { label: '', grow: 5.6 },
+            { label: 'command', grow: 1.35 },
+            { label: 'option', grow: 1.1 },
+            { label: '◀', grow: 0.9 },
+            { isArrowSplit: true, grow: 0.9 },
+            { label: '▶', grow: 0.9 }
+          ]
+        }
+      ];
+
+      kbLayout.forEach(rowInfo => {
+        const rowEl = document.createElement('div');
+        rowEl.className = 'kb-row' + (rowInfo.isFn ? ' fn-row' : '');
+        
+        rowInfo.keys.forEach(k => {
+          if (k.isArrowSplit) {
+            const splitKey = document.createElement('div');
+            splitKey.className = 'kb-key arrow-split';
+            splitKey.style.flex = `${k.grow} 1 0`;
+            splitKey.innerHTML = `
+              <div class="kb-key arrow-sub">▲</div>
+              <div class="kb-key arrow-sub">▼</div>
+            `;
+            rowEl.appendChild(splitKey);
+          } else {
+            const keyEl = document.createElement('div');
+            keyEl.className = 'kb-key';
+            keyEl.style.flex = `${k.grow} 1 0`;
+            keyEl.textContent = k.label;
+            rowEl.appendChild(keyEl);
+          }
+        });
+
+        keyboardWell.appendChild(rowEl);
+      });
+
+      // 2. Tab Bar Interaction
+      const tabs = document.querySelectorAll('.tab-btn');
+      const panels = document.querySelectorAll('.tab-panel');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.setAttribute('aria-selected', 'false'));
+          panels.forEach(p => p.classList.remove('active'));
+
+          tab.setAttribute('aria-selected', 'true');
+          const targetPanelId = tab.getAttribute('aria-controls');
+          const targetPanel = document.getElementById(targetPanelId);
+          if (targetPanel) {
+            targetPanel.classList.add('active');
+          }
+        });
+      });
+
+      // 3. State & Animation Engine
+      const laptop = document.getElementById('laptop');
+      const laptopLid = document.getElementById('laptopLid');
+      const lidOut = document.getElementById('lidOut');
+      const lidIn = document.getElementById('lidIn');
+      const heroHeader = document.getElementById('heroHeader');
+      const screenOffOverlay = document.getElementById('screenOffOverlay');
+      const pillTabs = document.getElementById('pillTabs');
+      const crackedGlow = document.getElementById('crackedGlow');
+      const hudFill = document.getElementById('hudFill');
+      const hudAngle = document.getElementById('hudAngle');
+      const hudStatus = document.getElementById('hudStatus');
+      const hudActionBtn = document.getElementById('hudActionBtn');
+      const afterSection = document.getElementById('afterSection');
+      const returnTopBtn = document.getElementById('returnTopBtn');
+
+      function clamp(val, min, max) {
+        return Math.min(Math.max(val, min), max);
+      }
+
+      function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      // Progress value: 0 (closed) to 1 (fully open)
+      let targetP = 0;
+      let currentP = 0;
+
+      function renderFrame(p) {
+        const o = easeInOutCubic(clamp(p, 0, 1));
+        const w = laptop.offsetWidth || 1000;
+
+        // Lid angle: 8deg -> 104deg
+        const lidAngle = 8 + (104 - 8) * o;
+
+        // Camera tilt: -34deg -> -14deg
+        const tilt = -34 + (-14 - (-34)) * o;
+
+        // Scale: 0.70 -> 0.90
+        const scale = 0.70 + (0.90 - 0.70) * o;
+
+        // translateY: 4% -> 26% of laptop width (so the opened screen and keyboard stay perfectly in view)
+        const ty = (0.04 + (0.26 - 0.04) * o) * w;
+
+        // Apply 3D transforms
+        laptop.style.transform = `translateY(${ty}px) scale(${scale}) rotateX(${tilt}deg)`;
+        laptopLid.style.setProperty('--lid', `${lidAngle}deg`);
+        laptopLid.style.transform = `translateZ(3px) rotateX(${lidAngle}deg)`;
+
+        // Switch between outer lid shell and inner display:
+        // Below 28deg, show the outer space-black lid shell.
+        // Above 28deg (as lid lifts toward user), show the inner display.
+        if (lidAngle <= 28) {
+          lidOut.style.display = 'block';
+          lidOut.style.opacity = '1';
+          lidIn.style.display = 'none';
+        } else {
+          lidOut.style.display = 'none';
+          lidIn.style.display = 'flex';
+          lidIn.style.opacity = '1';
+        }
+
+        // Screen is fully awake & visible as it opens
+        if (screenOffOverlay) {
+          screenOffOverlay.style.opacity = '0';
+        }
+
+        // Cracked glow at hinge slit fades as lid opens
+        if (crackedGlow) {
+          crackedGlow.style.opacity = (1 - clamp(o / 0.12, 0, 1)).toFixed(2);
+        }
+
+        // Headline fades out and moves up
+        const headerP = clamp(o / 0.25, 0, 1);
+        heroHeader.style.opacity = (1 - headerP).toFixed(3);
+        heroHeader.style.transform = `translateY(${-40 * headerP}px)`;
+
+        // HUD updates
+        if (hudFill) {
+          hudFill.style.width = `${Math.round(o * 100)}%`;
+        }
+        if (hudAngle) {
+          hudAngle.textContent = `${Math.round(lidAngle)}°`;
+        }
+        if (hudStatus) {
+          if (p >= 0.98) {
+            hudStatus.textContent = 'Scroll for details ↓';
+          } else if (p > 0.05) {
+            hudStatus.textContent = 'Opening...';
+          } else {
+            hudStatus.textContent = 'Scroll to open';
+          }
+        }
+        if (hudActionBtn) {
+          hudActionBtn.textContent = p >= 0.95 ? 'Close' : 'Open';
+        }
+
+        // Pill tab bar appears when lid is open (p > 0.82)
+        if (p > 0.82) {
+          pillTabs.classList.add('visible');
+        } else {
+          pillTabs.classList.remove('visible');
+        }
+      }
+
+      // Smooth Animation Loop
+      function loop() {
+        currentP += (targetP - currentP) * 0.18;
+        if (Math.abs(targetP - currentP) < 0.0003) {
+          currentP = targetP;
+        }
+
+        renderFrame(currentP);
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+
+      // 4. TRUE SCROLL-LOCK UNTIL 100% OPEN
+      window.addEventListener('wheel', (e) => {
+        const isAtTop = window.scrollY <= 10;
+
+        if (isAtTop) {
+          if (e.deltaY > 0) {
+            // Scrolling down
+            if (targetP < 1) {
+              e.preventDefault(); // LOCK THE PAGE! DO NOT SCROLL TO BOTTOM!
+              const step = 0.06 + Math.min(Math.abs(e.deltaY) * 0.0005, 0.08);
+              targetP = clamp(targetP + step, 0, 1);
+            }
+          } else if (e.deltaY < 0) {
+            // Scrolling up
+            if (targetP > 0) {
+              e.preventDefault();
+              const step = 0.06 + Math.min(Math.abs(e.deltaY) * 0.0005, 0.08);
+              targetP = clamp(targetP - step, 0, 1);
+            }
+          }
+        }
+      }, { passive: false });
+
+      // Touch Drag Support (Mobile & Trackpads)
+      let touchY = 0;
+      window.addEventListener('touchstart', (e) => {
+        touchY = e.touches[0].clientY;
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (window.scrollY <= 10) {
+          const deltaY = touchY - e.touches[0].clientY;
+          if (deltaY > 0 && targetP < 1) {
+            e.preventDefault();
+            targetP = clamp(targetP + deltaY * 0.003, 0, 1);
+            touchY = e.touches[0].clientY;
+          } else if (deltaY < 0 && targetP > 0 && window.scrollY <= 10) {
+            e.preventDefault();
+            targetP = clamp(targetP + deltaY * 0.003, 0, 1);
+            touchY = e.touches[0].clientY;
+          }
+        }
+      }, { passive: false });
+
+      // Direct Mouse Drag on Laptop or Stage
+      let isDragging = false;
+      let dragStartY = 0;
+      let dragStartP = 0;
+
+      window.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.pill-tabs') || e.target.closest('button') || e.target.closest('a')) return;
+        if (window.scrollY > 10) return;
+        isDragging = true;
+        dragStartY = e.clientY;
+        dragStartP = targetP;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const delta = dragStartY - e.clientY;
+        targetP = clamp(dragStartP + delta / 350, 0, 1);
+      });
+
+      window.addEventListener('mouseup', () => { isDragging = false; });
+
+      // Keyboard Arrow & Spacebar Controls
+      window.addEventListener('keydown', (e) => {
+        if (window.scrollY <= 10) {
+          if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
+            if (targetP < 1) {
+              e.preventDefault();
+              targetP = clamp(targetP + 0.15, 0, 1);
+            }
+          } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+            if (targetP > 0) {
+              e.preventDefault();
+              targetP = clamp(targetP - 0.15, 0, 1);
+            }
+          }
+        }
+      });
+
+      // HUD Button Quick Toggle (Open / Close)
+      if (hudActionBtn) {
+        hudActionBtn.addEventListener('click', () => {
+          if (targetP >= 0.95) {
+            targetP = 0;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            targetP = 1;
+          }
+        });
+      }
+
+      // Return to Top & Close Laptop Button
+      if (returnTopBtn) {
+        returnTopBtn.addEventListener('click', () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          targetP = 0;
+        });
+      }
+
+      // Initial Render
+      renderFrame(0);
+
+    })();
+  </script>
+</body>
+</html>
