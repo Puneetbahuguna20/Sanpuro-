@@ -74,7 +74,7 @@ export default function SlideStack() {
           trigger: stack,
           start: 'top top',
           // Phones and tablets get a shorter pin so each slide needs less swiping
-          end: () => '+=' + tl.duration() * window.innerHeight * (window.innerWidth < 1024 ? 0.45 : 0.9),
+          end: () => '+=' + tl.duration() * window.innerHeight * (window.innerWidth < 1024 ? 0.3 : 0.9),
           pin: true,
           scrub: 1,
           anticipatePin: 1,

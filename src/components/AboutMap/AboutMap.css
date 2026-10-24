@@ -116,3 +116,23 @@ body.am-cursor-hidden [data-cursor-root]{opacity:0!important;visibility:hidden!i
 
 @media (max-width:760px){.am-tagline{display:none}.am-rail{width:40px}.am-card{left:52px}}
 @media (prefers-reduced-motion:reduce){.am *{animation:none!important;transition:none!important}}
+
+/* Phones and tablets: shrink the map pieces so more fits on screen */
+@media (max-width:1023px){
+  .am-node{scale:.8;transform-origin:0 0}
+  .am-hub{width:min(460px,78vw);gap:10px}
+  .am-hello{font-size:clamp(40px,8vw,60px)}
+  .am-hub h2{font-size:clamp(24px,5vw,36px)}
+  .am-hub p{font-size:14px}
+  .am-bubble{font-size:20px;padding:12px 20px 14px}
+}
+@media (max-width:760px){
+  .am-node{scale:.62}
+  .am-hello{font-size:44px}
+  .am-hub h2{font-size:26px}
+  .am-hub p{font-size:13px}
+  .am-hub .am-mono-line{font-size:11px}
+  .am-card{width:calc(100% - 52px - 16px);padding:16px}
+  .am-card h3{font-size:20px}
+  .am-card p{font-size:14px}
+}
