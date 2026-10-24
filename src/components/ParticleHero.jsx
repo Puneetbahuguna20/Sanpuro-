@@ -318,20 +318,22 @@ export default function ParticleHero({ loaded }) {
       // Mouse repel: full strength on other shapes, gentle on the face so it stays readable
       // A real finger repels like the mouse; the idle virtual pointer only nudges
       const gentle = coarse && performance.now() - lastTouch > 1200;
-      // The face is softened for the desktop mouse only; on touch screens it reacts
-      // like the other shapes
-      const faceSoft = coarse ? 0 : faceAmt;
-      // Deep shapes (face relief, ribbon ring) use line-of-sight distance on touch;
-      // earth and cube keep the normal 3D distance
       const ribbonIdx = FACE_IDX + 1;
       const deepShape = Math.min(1, faceAmt + (currentShapeIdx === ribbonIdx ? 1 - k : 0) + (nextShapeIdx === ribbonIdx ? k : 0));
-      const deepAmt = coarse ? deepShape : 0;
-      // Touch: earth and cube always use the soft setting (a full-strength finger blows
-      // them apart); the deep shapes get full strength under a real finger
-      // Desktop: earth and cube scatter a lot at full strength, so they get a milder push
-      const soft = gentle ? 1 : coarse ? 1 - deepAmt : (1 - deepShape) * 0.55;
-      const repelRadius = (2.0 - 0.8 * faceSoft) * (1 - 0.5 * soft);
-      const repelForce = (0.28 - 0.2 * faceSoft) * (1 - 0.92 * soft);
+      let repelRadius, repelForce;
+      if (coarse) {
+        // Touch: one balanced setting for every shape. Distance is measured from the
+        // finger's line of sight (deepAmt = 1), so earth/cube surfaces in front of or
+        // behind z = 0 react as much as the face and ribbon
+        repelRadius = gentle ? 1.0 : 1.5;
+        repelForce = gentle ? 0.012 : 0.035;
+      } else {
+        // Desktop: face is gentle, earth and cube milder than full strength
+        const soft = (1 - deepShape) * 0.55;
+        repelRadius = (2.0 - 0.8 * faceAmt) * (1 - 0.5 * soft);
+        repelForce = (0.28 - 0.2 * faceAmt) * (1 - 0.92 * soft);
+      }
+      const deepAmt = coarse ? 1 : 0;
 
       for (let i = 0; i < N; i++) {
         const i3 = i * 3;
