@@ -119,6 +119,8 @@ body.am-cursor-hidden [data-cursor-root]{opacity:0!important;visibility:hidden!i
 
 /* Phones and tablets: shrink the map pieces so more fits on screen */
 @media (max-width:1023px){
+  /* keep the rail's "(02)" clear of the fixed nav logo */
+  .am-rail{padding-top:84px}
   .am-node{scale:.8;transform-origin:0 0}
   .am-hub{width:min(460px,78vw);gap:10px}
   .am-hello{font-size:clamp(40px,8vw,60px)}

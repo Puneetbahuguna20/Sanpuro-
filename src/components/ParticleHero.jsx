@@ -22,6 +22,7 @@ export default function ParticleHero({ loaded }) {
   const canvasRef = useRef(null);
   const headlineLinesRef = useRef([]);
   const introRef = useRef([]);
+  const headlineRef = useRef(null);
   const bottomRowRef = useRef(null);
   const hintRef = useRef(null);
 
@@ -50,7 +51,7 @@ export default function ParticleHero({ loaded }) {
     const scene = new THREE.Scene();
 
     const isMobile = window.innerWidth < 700;
-    const N = isMobile ? 4500 : 11000;
+    const N = isMobile ? 8000 : 11000;
     const dustCount = isMobile ? 800 : 2200;
 
     // Generate Shape Positions
@@ -107,7 +108,7 @@ export default function ParticleHero({ loaded }) {
 
     const material = new THREE.PointsMaterial({
       color: 0xF5F5F7,
-      size: isMobile ? 0.03 : 0.022,
+      size: isMobile ? 0.024 : 0.022,
       opacity: 0.9,
       transparent: true,
       blending: THREE.AdditiveBlending,
@@ -153,12 +154,36 @@ export default function ParticleHero({ loaded }) {
 
     // Initial scale calculation
     const updateScale = () => {
-      const s = Math.min(1, width / 900) * 0.9 + 0.1;
+      const halfH = Math.tan((camera.fov * Math.PI) / 360) * camera.position.z;
+      const halfW = halfH * camera.aspect;
+
+      // Phones: the layout leaves a gap between the headline and the paragraph; the
+      // shape is centred in it and sized to fill it
+      const headline = headlineRef.current;
+      const desc = introRef.current[1];
+      if (width < 700 && headline && desc) {
+        const top = section.getBoundingClientRect().top;
+        const gapTop = headline.getBoundingClientRect().bottom - top;
+        const gapBottom = desc.getBoundingClientRect().top - top;
+        const gapPx = Math.max(120, gapBottom - gapTop);
+        const unitsPerPx = (2 * halfH) / height;
+        // the face (tallest shape) is 7.8 units tall in local space and sits 0.55 below
+        // its origin, so lift it by that much to centre it in the gap
+        const s = (gapPx * unitsPerPx * 0.9) / 7.8;
+        points.scale.set(s, s, s);
+        points.position.x = 0;
+        points.position.y = halfH - ((gapTop + gapBottom) / 2) * unitsPerPx + 0.55 * s;
+        return;
+      }
+
+      // Tablets: the copy fills the width, so the shape shrinks into the lower half
+      const compact = width < 1024;
+      const s = (Math.min(1, width / 900) * 0.9 + 0.1) * (compact ? 0.55 : 1);
       points.scale.set(s, s, s);
 
-      // Shift the shape right of center so it clears the headline (desktop only)
-      const halfW = Math.tan((camera.fov * Math.PI) / 360) * camera.position.z * camera.aspect;
-      points.position.x = width >= 700 ? halfW * 0.35 : 0;
+      // Shift the shape right of center so it clears the headline
+      points.position.x = halfW * 0.35;
+      points.position.y = compact ? -halfH * 0.4 : 0;
     };
     updateScale();
 
@@ -166,20 +191,44 @@ export default function ParticleHero({ loaded }) {
     const mouse = { x: 0, y: 0, active: false };
     const targetMouse = { x: 0, y: 0 };
 
-    const onPointerMove = (e) => {
+    // Touch screens have no hover: a finger drives the effect while it is down, and
+    // otherwise a virtual pointer drifts over the shape so the particles keep rippling
+    const coarse = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    let lastTouch = -Infinity;
+
+    const setTarget = (clientX, clientY) => {
       // Use window dimensions for consistent NDC regardless of section bounds
-      targetMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      targetMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      targetMouse.x = (clientX / window.innerWidth) * 2 - 1;
+      targetMouse.y = -(clientY / window.innerHeight) * 2 + 1;
       mouse.active = true;
+    };
+
+    const onPointerMove = (e) => {
+      if (e.pointerType === 'touch') return; // handled by the touch listeners
+      setTarget(e.clientX, e.clientY);
     };
 
     const onPointerLeave = () => {
       mouse.active = false;
     };
 
+    const onTouch = (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      lastTouch = performance.now();
+      setTarget(t.clientX, t.clientY);
+    };
+    const onTouchEnd = () => {
+      lastTouch = performance.now();
+    };
+
     // Listen on window so mouse works even over overlaid text
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerleave', onPointerLeave);
+    window.addEventListener('touchstart', onTouch, { passive: true });
+    window.addEventListener('touchmove', onTouch, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    const shapeNdc = new THREE.Vector3();
 
     // Animation & Morph State
     let animId = null;
@@ -199,6 +248,18 @@ export default function ParticleHero({ loaded }) {
     const render = () => {
       const dt = clock.getDelta();
       const elapsed = clock.getElapsedTime();
+
+      // Touch screens: when no finger is down, wander a virtual pointer over the shape
+      if (coarse && performance.now() - lastTouch > 1200) {
+        // The camera's view matrix is only filled in by the first render, so update it first
+        camera.updateMatrixWorld();
+        shapeNdc.copy(points.position).project(camera);
+        if (Number.isFinite(shapeNdc.x) && Number.isFinite(shapeNdc.y)) {
+          targetMouse.x = shapeNdc.x + Math.cos(elapsed * 0.9) * 0.22;
+          targetMouse.y = shapeNdc.y + Math.sin(elapsed * 1.3) * 0.12;
+          mouse.active = true;
+        }
+      }
 
       // Mouse smoothing (faster lerp for responsiveness)
       mouse.x += (targetMouse.x - mouse.x) * 0.08;
@@ -249,8 +310,10 @@ export default function ParticleHero({ loaded }) {
       const faceAmt =
         (currentShapeIdx === FACE_IDX ? 1 - k : 0) + (nextShapeIdx === FACE_IDX ? k : 0);
       // Mouse repel: full strength on other shapes, gentle on the face so it stays readable
-      const repelRadius = 2.0 - 0.8 * faceAmt;
-      const repelForce = 0.28 - 0.2 * faceAmt;
+      // A real finger repels like the mouse; the idle virtual pointer only nudges
+      const gentle = coarse && performance.now() - lastTouch > 1200;
+      const repelRadius = (2.0 - 0.8 * faceAmt) * (gentle ? 0.55 : 1);
+      const repelForce = (0.28 - 0.2 * faceAmt) * (gentle ? 0.18 : 1);
 
       for (let i = 0; i < N; i++) {
         const i3 = i * 3;
@@ -351,6 +414,15 @@ export default function ParticleHero({ loaded }) {
     };
     window.addEventListener('resize', onResize);
 
+    // The phone layout depends on text height (fonts, wrapping), so re-fit when it changes
+    const overlay = section.querySelector('.hero-overlay');
+    // On phones the hero can grow taller than the screen, so resize the canvas with it
+    const ro = 'ResizeObserver' in window ? new ResizeObserver(() => onResize()) : null;
+    if (ro && overlay) {
+      ro.observe(overlay);
+      ro.observe(section);
+    }
+
     // Pause rendering with IntersectionObserver when off-screen
     const observer = new IntersectionObserver(([entry]) => {
       isVisible = entry.isIntersecting;
@@ -374,8 +446,12 @@ export default function ParticleHero({ loaded }) {
       if (animId) cancelAnimationFrame(animId);
       observer.disconnect();
       window.removeEventListener('resize', onResize);
+      if (ro) ro.disconnect();
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerleave', onPointerLeave);
+      window.removeEventListener('touchstart', onTouch);
+      window.removeEventListener('touchmove', onTouch);
+      window.removeEventListener('touchend', onTouchEnd);
 
       geometry.dispose();
       material.dispose();
@@ -488,7 +564,7 @@ export default function ParticleHero({ loaded }) {
             <span>Strategy</span>
           </div>
 
-          <h2 className="hero-headline" aria-label="Turning Your Ideas Into Digital Experiences That Move.">
+          <h2 className="hero-headline" ref={headlineRef} aria-label="Turning Your Ideas Into Digital Experiences That Move.">
             <span className="hero-line-wrap" aria-hidden="true">
               <span className="hero-line-inner" ref={el => (headlineLinesRef.current[0] = el)}>
                 Turning Your Ideas

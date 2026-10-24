@@ -495,6 +495,20 @@ html.lenis, html.lenis body {
     display: none;
   }
 
+  /* Keep "Available for" and "Based in" on one row */
+  .hero-meta-group {
+    gap: 20px;
+    flex-wrap: nowrap;
+  }
+
+  .hero-meta-block {
+    font-size: 11px;
+  }
+
+  .hero-scroll-cue-line {
+    height: 40px;
+  }
+
   .hero-eyebrow {
     gap: 8px;
     font-size: 11px;
@@ -852,6 +866,59 @@ html.lenis, html.lenis body {
   background-color: var(--c);
 }
 
+/* Touch screens: the row in the middle of the screen gets the hover look */
+.work-row.is-active::before {
+  transform: scaleY(1);
+  transform-origin: top;
+}
+
+.work-row.is-active .work-row-title {
+  transform: translateX(clamp(8px, 2vw, 32px));
+}
+
+.work-row.is-active .work-row-dot {
+  background-color: var(--c);
+}
+
+.work-row-preview {
+  display: none;
+}
+
+@media (hover: none), (pointer: coarse) {
+  /* Every row keeps its preview space, so activating one never shifts the layout */
+  .work-row-preview {
+    position: relative;
+    z-index: 1;
+    grid-column: 1 / -1;
+    display: block;
+    height: min(46vw, 300px);
+    margin-top: 12px;
+    border-radius: 6px;
+    background-color: var(--c);
+    overflow: hidden;
+    opacity: 0.18;
+    transform: scale(0.95);
+    transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .work-row.is-active .work-row-preview {
+    opacity: 1;
+    transform: scale(1) rotate(-1.5deg);
+  }
+
+  .work-row-preview-label {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #000000;
+  }
+}
+
 @media (max-width: 640px) {
   .work-row {
     grid-template-columns: 36px 1fr;
@@ -1012,5 +1079,155 @@ html.lenis, html.lenis body {
   }
   .intro-word {
     color: var(--text) !important;
+  }
+}
+
+/* ==========================================================================
+   Phone hero (< 700px): headline on top, particle shape in the middle,
+   copy + actions below, meta row at the bottom
+   ========================================================================== */
+.nav-burger,
+.nav-menu {
+  display: none;
+}
+
+@media (max-width: 699px) {
+  .nav-links {
+    display: none;
+  }
+
+  .nav-burger {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    width: 44px;
+    height: 44px;
+    padding: 0 6px;
+    background: none;
+    border: 0;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .nav-burger span {
+    display: block;
+    height: 2px;
+    background-color: currentColor;
+    transition: transform 0.35s cubic-bezier(0.7, 0, 0.2, 1), opacity 0.2s ease;
+  }
+
+  .nav-burger.is-open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+  .nav-burger.is-open span:nth-child(2) { opacity: 0; }
+  .nav-burger.is-open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+  .nav-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 max(16px, env(safe-area-inset-left));
+    background-color: var(--black);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.35s ease, visibility 0.35s;
+  }
+
+  .nav-menu.is-open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .nav-menu-link {
+    font-family: var(--display);
+    font-weight: 800;
+    font-stretch: 75%;
+    text-transform: uppercase;
+    font-size: 15vw;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    transform: translateY(20px);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .nav-menu.is-open .nav-menu-link {
+    transform: none;
+  }
+
+  /* The hero may grow past one screen so the shape always gets a big stage */
+  .particle-hero {
+    height: auto;
+    min-height: max(600px, 100svh);
+  }
+
+  .hero-overlay {
+    height: auto;
+    min-height: max(600px, 100svh);
+    padding-top: 92px;
+    padding-bottom: 22px;
+  }
+
+  /* Reserved stage for the particle shape between headline and copy */
+  .hero-headline {
+    margin-bottom: min(64vw, 440px);
+  }
+
+  .hero-main {
+    flex: 1;
+    gap: 16px;
+  }
+
+  .hero-headline {
+    font-size: clamp(34px, 9.4vw, 46px);
+  }
+
+  /* Pushes the copy down; the space above it is where the shape sits */
+  .hero-desc {
+    margin-top: auto;
+    max-width: none;
+  }
+
+  .hero-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .hero-cta-primary {
+    justify-content: center;
+    height: 52px;
+  }
+
+  .hero-cta-reel {
+    align-self: center;
+  }
+
+  .hero-bottom-row {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(245, 245, 247, 0.22);
+  }
+
+  .hero-scroll-cue {
+    display: none;
+  }
+
+  .hero-meta-group {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .hero-meta-block + .hero-meta-block {
+    padding-left: 20px;
+    border-left: 1px solid rgba(245, 245, 247, 0.22);
   }
 }

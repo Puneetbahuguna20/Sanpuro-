@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import useIsTouch from '../hooks/useIsTouch';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -14,6 +15,26 @@ const PROJECTS = [
 
 export default function Work() {
   const containerRef = useRef(null);
+  const isTouch = useIsTouch();
+
+  // Touch screens can't hover: the row crossing the middle of the screen becomes
+  // active instead, showing the same highlight plus an inline preview
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!isTouch || !el) return;
+    const rows = [...el.querySelectorAll('.work-row')];
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((en) => en.target.classList.toggle('is-active', en.isIntersecting));
+      },
+      { rootMargin: '-45% 0px -45% 0px' }
+    );
+    rows.forEach((row) => io.observe(row));
+    return () => {
+      io.disconnect();
+      rows.forEach((row) => row.classList.remove('is-active'));
+    };
+  }, [isTouch]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -87,6 +108,10 @@ export default function Work() {
                 <span className="work-row-dot" aria-hidden="true" />
                 <span>{p.meta}</span>
               </div>
+              {/* Inline preview, shown only on touch screens (desktop uses FloatingPreview) */}
+              <span className="work-row-preview" aria-hidden="true">
+                <span className="work-row-preview-label">{`[PROJECT ${p.n} IMAGE]`}</span>
+              </span>
             </a>
           ))}
         </div>

@@ -194,8 +194,12 @@ export default function AboutMap() {
       ty = clamp(fy + offY);
     };
     const onLeave = () => { offX = 0; offY = 0; if (!openRef.current) { tx = 0.5; ty = 0.5; } };
+    /* touch screens: the map drifts on its own until the user takes over */
+    let lastInteract = -Infinity;
     const onDown = (e) => {
+      if (e.pointerType === 'touch') return; /* touch uses the swipe handlers below */
       if (cardRef.current && cardRef.current.contains(e.target)) return;
+      lastInteract = performance.now();
       /* start from where the map is drawn right now, not where it was easing to */
       tx = x; ty = y;
       dragging = true; moved = 0; sx = e.clientX; sy = e.clientY; stx = tx; sty = ty;
@@ -211,9 +215,42 @@ export default function AboutMap() {
       }
     };
     const onUp = (e) => {
+      if (dragging) lastInteract = performance.now();
       if (dragging && moved > 6 && !touch) { const [fx, fy] = follow(e); offX = tx - fx; offY = ty - fy; }
       dragging = false; ab.classList.remove('am-dragging');
     };
+    /* Touch swipe: a light horizontal flick pans the map (amplified, with momentum).
+       Touch events keep firing even after the browser starts a vertical page scroll,
+       unlike pointer events, so a slightly diagonal swipe still moves the map. */
+    const SWIPE_GAIN = 2.4;
+    let tStartX = 0, tStartY = 0, tStartTx = 0, tLastX = 0, tLastT = 0, tVel = 0, glide = 0, swiping = false;
+    const onTouchStart = (e) => {
+      if (openRef.current || (cardRef.current && cardRef.current.contains(e.target))) return;
+      const t = e.touches[0];
+      swiping = true; moved = 0; glide = 0; tVel = 0;
+      tx = x; ty = y;
+      tStartX = tLastX = t.clientX; tStartY = t.clientY; tStartTx = tx; tLastT = performance.now();
+      lastInteract = tLastT;
+    };
+    const onTouchMove = (e) => {
+      if (!swiping) return;
+      const t = e.touches[0];
+      const now = performance.now();
+      const dx = t.clientX - tStartX;
+      moved = Math.max(moved, Math.abs(dx) + Math.abs(t.clientY - tStartY));
+      tx = clamp(tStartTx - (dx * SWIPE_GAIN) / Math.max(1, maxX));
+      /* velocity in map units per ms, smoothed */
+      const dt = Math.max(1, now - tLastT);
+      tVel = 0.7 * tVel + 0.3 * (-(t.clientX - tLastX) * SWIPE_GAIN / Math.max(1, maxX) / dt);
+      tLastX = t.clientX; tLastT = now; lastInteract = now;
+    };
+    const onTouchEnd = () => {
+      if (!swiping) return;
+      swiping = false;
+      if (performance.now() - tLastT < 80) glide = tVel * 16; /* per-frame push */
+      lastInteract = performance.now();
+    };
+
     /* right-click drags the map, so keep the browser menu out of the way */
     const onContextMenu = (e) => { if (!(cardRef.current && cardRef.current.contains(e.target))) e.preventDefault(); };
     const onClickCapture = (e) => { if (moved > 6) { e.preventDefault(); e.stopPropagation(); moved = 0; } };
@@ -231,8 +268,18 @@ export default function AboutMap() {
     });
 
     const loop = () => {
+      /* flick momentum after a swipe */
+      if (Math.abs(glide) > 0.00005) {
+        tx = clamp(tx + glide); glide *= 0.93; lastInteract = performance.now();
+        if (tx === 0 || tx === 1) glide = 0;
+      }
+      if (touch && visible && !reduce && !dragging && !swiping && !openRef.current && performance.now() - lastInteract > 2500) {
+        const t = performance.now() / 1000;
+        tx = 0.5 + 0.42 * Math.sin(t * 0.12);
+        ty = 0.5 + 0.38 * Math.sin(t * 0.083 + 1.3);
+      }
       /* while dragging, the map sticks to the pointer 1:1 instead of easing behind it */
-      if (visible) { const k = reduce || (dragging && moved > 6) ? 1 : 0.055; x += (tx - x) * k; y += (ty - y) * k; render(); }
+      if (visible) { const k = reduce || (dragging && moved > 6) ? 1 : swiping || Math.abs(glide) > 0.00005 ? 0.35 : 0.055; x += (tx - x) * k; y += (ty - y) * k; render(); }
       raf = requestAnimationFrame(loop);
     };
 
@@ -249,6 +296,10 @@ export default function AboutMap() {
     ab.addEventListener('click', onClickCapture, true);
     ab.addEventListener('dragstart', onDragStart);
     ab.addEventListener('contextmenu', onContextMenu);
+    ab.addEventListener('touchstart', onTouchStart, { passive: true });
+    ab.addEventListener('touchmove', onTouchMove, { passive: true });
+    ab.addEventListener('touchend', onTouchEnd);
+    ab.addEventListener('touchcancel', onTouchEnd);
 
     /* let ScrollTrigger (if used) recalc once fonts are in */
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { measure(); window.dispatchEvent(new Event('resize')); });
@@ -265,6 +316,10 @@ export default function AboutMap() {
       ab.removeEventListener('click', onClickCapture, true);
       ab.removeEventListener('dragstart', onDragStart);
       ab.removeEventListener('contextmenu', onContextMenu);
+      ab.removeEventListener('touchstart', onTouchStart);
+      ab.removeEventListener('touchmove', onTouchMove);
+      ab.removeEventListener('touchend', onTouchEnd);
+      ab.removeEventListener('touchcancel', onTouchEnd);
       focusHandlers.forEach(([n, h]) => n.removeEventListener('focus', h));
     };
   }, []);
