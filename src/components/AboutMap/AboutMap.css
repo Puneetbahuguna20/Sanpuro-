@@ -143,4 +143,7 @@ body.am-cursor-hidden [data-cursor-root]{opacity:0!important;visibility:hidden!i
    page scroll at its top/bottom edge in AboutMap.jsx) */
 @media (hover:none),(pointer:coarse){
   .am{touch-action:none}
+  /* card open: normal page scrolling; long cards scroll inside themselves */
+  .am.am-card-open{touch-action:pan-y}
+  .am-card{max-height:calc(100% - 140px);overflow-y:auto;overscroll-behavior:contain}
 }

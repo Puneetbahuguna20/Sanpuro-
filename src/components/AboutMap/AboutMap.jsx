@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import aboutCards from './aboutCards';
+import { useLenis } from '../../context/LenisContext';
 import './AboutMap.css';
 
 /*
@@ -128,7 +129,23 @@ export default function AboutMap() {
   const [openId, setOpenId] = useState(null);
   const [isTouch, setIsTouch] = useState(false);
 
+  const lenis = useLenis();
   useEffect(() => { openRef.current = openId; }, [openId]);
+
+  /* Touch screens: while a card is open the page must scroll normally (the map's own
+     swipe handling is paused), and the section is brought fully into view so the card,
+     which sits at its bottom, is never off-screen */
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || !window.matchMedia('(hover: none), (pointer: coarse)').matches) return;
+    el.classList.toggle('am-card-open', !!openId);
+    if (!openId) return;
+    const r = el.getBoundingClientRect();
+    if (r.top < -1 || r.bottom > window.innerHeight + 1) {
+      if (lenis) lenis.scrollTo(el, { duration: 0.6 });
+      else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [openId, lenis]);
 
   /* card pop animation */
   useEffect(() => {

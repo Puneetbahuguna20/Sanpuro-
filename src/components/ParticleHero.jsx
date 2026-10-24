@@ -325,8 +325,8 @@ export default function ParticleHero({ loaded }) {
         // Touch: one balanced setting for every shape. Distance is measured from the
         // finger's line of sight (deepAmt = 1), so earth/cube surfaces in front of or
         // behind z = 0 react as much as the face and ribbon
-        repelRadius = gentle ? 1.0 : 1.5;
-        repelForce = gentle ? 0.012 : 0.035;
+        repelRadius = gentle ? 1.1 : 1.6;
+        repelForce = gentle ? 0.016 : 0.05;
       } else {
         // Desktop: face is gentle, earth and cube milder than full strength
         const soft = (1 - deepShape) * 0.55;
