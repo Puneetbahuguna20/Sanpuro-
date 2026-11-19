@@ -895,6 +895,8 @@ html.lenis, html.lenis body {
     margin-top: 12px;
     border-radius: 6px;
     background-color: var(--c);
+    background-size: cover;
+    background-position: center;
     overflow: hidden;
     opacity: 0.18;
     transform: scale(0.95);
@@ -941,6 +943,8 @@ html.lenis, html.lenis body {
   overflow: hidden;
   pointer-events: none;
   z-index: 40;
+  background-size: cover;
+  background-position: center;
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.6);
   will-change: transform, opacity;

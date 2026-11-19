@@ -2,15 +2,73 @@ import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import useIsTouch from '../hooks/useIsTouch';
+import smartPhotographyImg from '../assets/smart-photography.jpg';
+import vantaOpticsImg from '../assets/vanta-optics.jpg';
+import mittiHouseImg from '../assets/mitti-house.jpg';
+import astrostarlightImg from '../assets/astrostarlight.jpg';
+import aiethronImg from '../assets/aiethron.jpg';
+import charakAyurvedaImg from '../assets/charak-ayurveda.jpg';
+import chatwithClientImg from '../assets/chatwithclient.jpg';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const PROJECTS = [
-  { n: '01', title: '[Project one]', meta: 'Website · Dev', c: '#F5F5F7' },
-  { n: '02', title: '[Project two]', meta: 'Brand · Web', c: '#9296A3' },
-  { n: '03', title: '[Project three]', meta: 'WebGL · 3D', c: '#F5F5F7' },
-  { n: '04', title: '[Project four]', meta: 'E-commerce', c: '#9296A3' },
-  { n: '05', title: '[Project five]', meta: 'Motion', c: '#F5F5F7' }
+  {
+    n: '01',
+    title: 'Smart Photography',
+    meta: 'Wedding Photography · Web',
+    c: '#F5F5F7',
+    url: 'https://smart-photography-two.vercel.app/',
+    img: smartPhotographyImg
+  },
+  {
+    n: '02',
+    title: 'Mitti House',
+    meta: 'Café · Web',
+    c: '#9296A3',
+    url: 'https://mitti-house-two.vercel.app/',
+    img: mittiHouseImg
+  },
+  {
+    n: '03',
+    title: 'Astrostarlight',
+    meta: 'Jewellery · E-commerce',
+    c: '#F5F5F7',
+    url: 'https://astro-ecom-chi.vercel.app/',
+    img: astrostarlightImg
+  },
+  {
+    n: '04',
+    title: 'Aiethron',
+    meta: 'FinTech & Travel · Web',
+    c: '#9296A3',
+    url: 'https://aiethron.ai/',
+    img: aiethronImg
+  },
+  {
+    n: '05',
+    title: 'Charak Ayurveda',
+    meta: 'Ayurveda · Brand Web',
+    c: '#F5F5F7',
+    url: 'https://charakayurvedademo.vercel.app/',
+    img: charakAyurvedaImg
+  },
+  {
+    n: '06',
+    title: 'ChatwithClient',
+    meta: 'SaaS · Web App',
+    c: '#9296A3',
+    url: 'https://chatwithclient.in/',
+    img: chatwithClientImg
+  },
+  {
+    n: '07',
+    title: 'VANTA Optics',
+    meta: 'Eyewear · 3D Web',
+    c: '#F5F5F7',
+    url: 'https://vantooptics.vercel.app/',
+    img: vantaOpticsImg
+  }
 ];
 
 export default function Work() {
@@ -71,7 +129,8 @@ export default function Work() {
       new CustomEvent('floating-preview:enter', {
         detail: {
           color: p.c,
-          label: `[PROJECT ${p.n} IMAGE]`
+          image: p.img,
+          label: p.img ? '' : `[PROJECT ${p.n} IMAGE]`
         }
       })
     );
@@ -95,7 +154,8 @@ export default function Work() {
           {PROJECTS.map((p) => (
             <a
               key={p.n}
-              href={`#project-${p.n}`}
+              href={p.url || `#project-${p.n}`}
+              {...(p.url ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               className="work-row"
               data-cursor="view"
               style={{ '--c': p.c }}
@@ -109,8 +169,14 @@ export default function Work() {
                 <span>{p.meta}</span>
               </div>
               {/* Inline preview, shown only on touch screens (desktop uses FloatingPreview) */}
-              <span className="work-row-preview" aria-hidden="true">
-                <span className="work-row-preview-label">{`[PROJECT ${p.n} IMAGE]`}</span>
+              <span
+                className="work-row-preview"
+                aria-hidden="true"
+                style={p.img ? { backgroundImage: `url(${p.img})` } : undefined}
+              >
+                {!p.img && (
+                  <span className="work-row-preview-label">{`[PROJECT ${p.n} IMAGE]`}</span>
+                )}
               </span>
             </a>
           ))}

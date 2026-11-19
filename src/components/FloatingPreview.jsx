@@ -22,8 +22,9 @@ export default function FloatingPreview() {
     };
 
     const handleEnter = (e) => {
-      const { color, label } = e.detail || {};
+      const { color, label, image } = e.detail || {};
       el.style.backgroundColor = color || '#F5F5F7';
+      el.style.backgroundImage = image ? `url(${image})` : 'none';
       if (labelRef.current) {
         labelRef.current.textContent = label || '';
       }
