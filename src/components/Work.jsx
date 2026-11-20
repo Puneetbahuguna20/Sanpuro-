@@ -6,7 +6,7 @@ import smartPhotographyImg from '../assets/smart-photography.jpg';
 import vantaOpticsImg from '../assets/vanta-optics.jpg';
 import mittiHouseImg from '../assets/mitti-house.jpg';
 import astrostarlightImg from '../assets/astrostarlight.jpg';
-import aiethronImg from '../assets/aiethron.jpg';
+import shreeMilletsImg from '../assets/shree-millets.jpg';
 import charakAyurvedaImg from '../assets/charak-ayurveda.jpg';
 import chatwithClientImg from '../assets/chatwithclient.jpg';
 
@@ -39,11 +39,11 @@ const PROJECTS = [
   },
   {
     n: '04',
-    title: 'Aiethron',
-    meta: 'FinTech & Travel · Web',
+    title: 'Shree Millets',
+    meta: 'Food · E-commerce',
     c: '#9296A3',
-    url: 'https://aiethron.ai/',
-    img: aiethronImg
+    url: 'https://shree-millets.vercel.app/',
+    img: shreeMilletsImg
   },
   {
     n: '05',
